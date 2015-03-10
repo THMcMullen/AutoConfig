@@ -31,10 +31,10 @@ class dart_matter{
     print("setup");
     //auto config creation aspect runs here
     baseTile.generate(5, 5, baseSystemSize);//start location of base tile
-    /*if(baseTile.genTime > 1){//Temp numbers for now, just for testing
+    if(baseTile.genTime > 1){//Temp numbers for now, just for testing
       baseTile.downSize;
       baseSystemSize = ((baseSystemSize+1)~/2);
-    }*/
+    }
     int containerSize;
     if(baseSystemSize == 129){
       containerSize = 7;
@@ -55,63 +55,35 @@ class dart_matter{
     for(int i = 0; i < container.length; i++){
       for(int j = 0; j < container[i].length; j++){
         
-        if(i < ((containerSize-1)/2))
+        int difI = i - (containerSize-1)~/2;
+        int difJ = j - (containerSize-1)~/2;
         
+        difI = difI.abs();
+        difJ = difJ.abs();
         
-        if(i == ((containerSize-1)/2)+1 || i == ((containerSize-1)/2)-1){
-          if(j == ((containerSize-1)/2)+1 || j == ((containerSize-1)/2)-1){
+        if(difI + difJ < (containerSize)/2){//the difference on the x and y are less than 3
+          if(difI + difJ == 1){
             container[i][j] = new land_tile();
-            container[i][j].generate(i, j,2);
-          }
+            container[i][j].generate(i, j, 1); 
+          }else if(difI + difJ == 2){
+            container[i][j] = new land_tile();
+            container[i][j].generate(i, j, 2); 
+          }else if(difI + difJ == 3){
+            container[i][j] = new land_tile();
+            container[i][j].generate(i, j, 3); 
+          } 
         }
-        
-        
-        
-        
-        /*
-        int loc = (i+j);
-        int center = containerSize;
-        //print(loc - center);
-        int dif = loc - center;
-        if(dif.abs() < (containerSize-1/2)){
-          if(dif.abs() == 1){//next to base tile, share resolution
-            container[i][j] = new land_tile();
-            container[i][j].generate(i, j,1);  
-          }else if(dif.abs() == 2 || dif.abs() == 0){
-            if(i == 3 && j == 3){
-              container[i][j] = new land_tile();
-              container[i][j].generate(i, j,5);
-            }else if(dif.abs() == 0){
-              if(i == (containerSize-1/2)+1 || i == (containerSize-1/2)-1){
-                if(j == (containerSize-1/2)+1 || j == (containerSize-1/2)-1){
-                  container[i][j] = new land_tile();
-                  container[i][j].generate(i, j,2);
-                }
-              }
-            }else{
-              container[i][j] = new land_tile();
-              container[i][j].generate(i, j,2);
-            }
-          }else if(dif.abs() == 3){
-            int temp = (baseSystemSize+1)~/2;
-            temp = (temp+1)~/2;
-            container[i][j] = new land_tile();
-            container[i][j].generate(i, j, 3);
-          }
-        }
-        */
+   
       }
     }
-    int countone = 0;
-    int counttwo = 0;
-    int countthree = 0;
+    
     
     List temptwo;
-    temptwo = new List(10);
-    for(int i = 0; i < 10; i++){
-      temptwo[i] = new List(10);
-      for(int j = 0; j < 10; j++){
-        temptwo[i][j] = 0;
+    temptwo = new List();
+    for(int i = 0; i < containerSize; i++){
+      temptwo.add(new List());
+      for(int j = 0; j < containerSize; j++){
+        temptwo[i].add(0);
       } 
     }
     
@@ -119,26 +91,18 @@ class dart_matter{
       for(int j = 0; j < container[i].length; j++){
         if(container[i][j] != null){
           temptwo[i][j] = container[i][j].res;
-          //print(container[i][j].res);
-          /*if(container[i][j].res == 129){
-            countone++;
-          }else if(container[i][j].res == 65){
-            counttwo++;
-          }else if(container[i][j].res == 33){
-            countthree++;
-          }*/
         }
       }
     }
-    /*print(countone);
-    print(counttwo);
-    print(countthree);*/
     
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < containerSize; i++){
       print(temptwo[i]);
     }
-    
-    
+    List tempnew = new List <land_tile>();
+    tempnew.add(new land_tile());
+    tempnew[0].generate(1,1,9);
+    print(tempnew[0].res);
+
   }
   
 }
