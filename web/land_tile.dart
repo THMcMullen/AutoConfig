@@ -11,7 +11,7 @@ class land_tile {
 
   int genTime;
   int runTime;
-  
+
   int res = 0;
 
   //Allows for a cleaner linking of attributes and uniforms
@@ -117,11 +117,11 @@ class land_tile {
     uniforms = utils.linkUniforms(gl, shader, unif);
 
 
-    print("Grid at X: $locX / Y: $locY ready to go");
+    //print("Grid at X: $locX / Y: $locY ready to go");
   }
 
   void CreateHeightMap(landCon) {
-    
+
     DateTime temp = new DateTime.now();
     //when creating a new tile, check to see if it has neighbours
     //check above
@@ -225,21 +225,21 @@ class land_tile {
       }
     }
 
-    print("Grid at X: $locX / Y: $locY ready to render, resolution: $res");
+    //print("Grid at X: $locX / Y: $locY ready to render, resolution: $res");
 
     init = true;
-    DateTime temp2 = new DateTime.now();
-    genTime =  temp2.millisecond - temp.millisecond;
-    
+
+    genTime = new DateTime.now().difference(temp).inMilliseconds.abs();
+
     //print(genTime);
-    
+
   }
 
   void CreateObject(landCon) {
 
     DateTime temp = new DateTime.now();
 
-    print("creating object at X: $locX, Y: $locY, with res: $res");
+    //print("creating object at X: $locX, Y: $locY, with res: $res");
 
     //waterBlob = new blob(gl, heightMap, res, locX, locY);
 
@@ -334,7 +334,7 @@ class land_tile {
     //base of the object is set up, now to create the edges
     if (left != null && left.res < res) {
       //the tile above has a higher res so create simple edges
-      print("making right edges");
+      //print("making right edges");
       for (int i = 0; i < res - 1; i += 2) {
         for (int j = 0; j < 1; j++) {
           //the possition of the vertic in the indice array we want to draw.
@@ -382,7 +382,7 @@ class land_tile {
       }
     }
     if (right != null && right.res < res) {
-      print("making left edges");
+      //print("making left edges");
       for (int i = 0; i < res - 1; i += 2) {
         for (int j = res - 2; j < res - 1; j++) {
           //the possition of the vertic in the indice array we want to draw.
@@ -433,7 +433,7 @@ class land_tile {
     }
 
     if (below != null && below.res < res) {
-      print("making below edges");
+      //print("making below edges");
       for (int i = 0; i < 1; i++) {
         for (int j = 1; j < res - 2; j += 2) {
           //the possition of the vertic in the indice array we want to draw.
@@ -475,7 +475,7 @@ class land_tile {
     }
 
     if (above != null && above.res < res) {
-      print("making above edges");
+      //print("making above edges");
       for (int i = res - 2; i < res - 1; i++) {
         for (int j = 1; j < res - 2; j += 2) {
           //the possition of the vertic in the indice array we want to draw.
@@ -516,37 +516,155 @@ class land_tile {
         }
       }
     }
-    
+
     gl.bindBuffer(webgl.RenderingContext.ELEMENT_ARRAY_BUFFER, indices);
     gl.bufferDataTyped(webgl.RenderingContext.ELEMENT_ARRAY_BUFFER, new Uint16List.fromList(index), webgl.STATIC_DRAW);
-    
+
     gl.bindBuffer(webgl.RenderingContext.ARRAY_BUFFER, vertices);
     gl.bufferDataTyped(webgl.ARRAY_BUFFER, new Float32List.fromList(vert), webgl.STATIC_DRAW);
-        
+
     gl.bindBuffer(webgl.RenderingContext.ARRAY_BUFFER, normals);
     gl.bufferData(webgl.ARRAY_BUFFER, new Float32List.fromList(norm), webgl.STATIC_DRAW);
-    
+
     numberOfTri = index.length;
-    
+
     index = null;
     vert = null;
     norm = null;
-    
+
     init = true;
-    DateTime temp2 = new DateTime.now();
-    runTime =  temp2.millisecond - temp.millisecond;
-    
-    
+
+    runTime = new DateTime.now().difference(temp).inMilliseconds.abs();
+
+
   }
 
-  downSize() {
+  downGrade(landCon) {
+    //print("Down Grade");
+
+    res = (res ~/ 2) + 1;
+
+    var tempList = new List(res);
+    for (int i = 0; i < res; i++) {
+      tempList[i] = new List(res);
+      for (int j = 0; j < res; j++) {
+        tempList[i][j] = 0.0;
+      }
+    }
+
+    for (int i = 0; i < heightMap.length; i += 2) {
+      for (int j = 0; j < heightMap[i].length; j += 2) {
+        tempList[i ~/ 2][j ~/ 2] = heightMap[i][j];
+      }
+    }
+
+    heightMap = tempList;
+    tempList = null;
+    CreateObject(landCon);
+  }
+
+  void upGrade(landCon) {
+    //print("Up Grade");
+
+    //when creating a new tile, check to see if it has neighbours
+    //check above
+    if (locX + 1 < landCon.length) {
+      if (landCon[locX + 1][locY] != null) {
+        if (landCon[locX + 1][locY].init == true) {
+          above = landCon[locX + 1][locY];
+        }
+      }
+    }
+    //check below
+    if (locX - 1 >= 0) {
+      if (landCon[locX - 1][locY] != null) {
+        if (landCon[locX - 1][locY].init == true) {
+          below = landCon[locX - 1][locY];
+        }
+      }
+    }
+    //check left
+    if (locY - 1 >= 0) {
+      if (landCon[locX][locY - 1] != null) {
+        if (landCon[locX][locY - 1].init == true) {
+          left = landCon[locX][locY - 1];
+        }
+      }
+    }
+    //check right
+    if (locY + 1 < landCon[locX].length) {
+      if (landCon[locX][locY + 1] != null) {
+        if (landCon[locX][locY + 1].init == true) {
+          right = landCon[locX][locY + 1];
+          //print("left");
+        }
+      }
+    }
+
+    res = (res * 2) - 1;
+    var height = (1 / res) * 10;
+    var rng = new math.Random();
+
+    var tempList = new List(res);
+    for (int i = 0; i < res; i++) {
+      tempList[i] = new List(res);
+      for (int j = 0; j < res; j++) {
+        tempList[i][j] = 0.0;
+        if (i % 2 == 0 && j % 2 == 0) {
+          tempList[i][j] = heightMap[i ~/ 2][j ~/ 2];
+        }
+        if (above != null && i == res - 1) {
+          tempList[res - 1][j] = above.heightMap[0][j ~/ (res / above.res)];
+        }
+        if (below != null && i == 0) {
+          tempList[0][j] = below.heightMap[below.res - 1][j ~/ (res / below.res)];
+        }
+        if (left != null && j == 0) {
+          tempList[i][0] = left.heightMap[i ~/ (res / left.res)][left.res - 1];
+        }
+        if (right != null && j == res - 1) {
+          tempList[i][res - 1] = right.heightMap[i ~/ (res / right.res)][0];
+        }
+      }
+    }
+
+    for (int i = 1; i < res - 1; i += 2) {
+      for (int j = 1; j < res - 1; j += 2) {
+
+        double avg = tempList[i - 1][j - 1] + tempList[i - 1][j + 1] + tempList[i + 1][j - 1] + tempList[i + 1][j + 1];
+
+        avg /= 4.0;
+
+        double offset = (-height) + rng.nextDouble() * (height - (-height));
+        tempList[i][j] = avg + offset;
+
+
+
+      }
+    }
+
+    for (int i = 0; i < res - 1; i += 1) {
+      for (int j = (i + 1) % 2; j < res - 1; j += 2) {
+        double avg = tempList[(i - 1 + res) % res][j] + tempList[(i + 1) % res][j] + tempList[i][(j + 1) % res] + tempList[i][(j - 1 + res) % res];
+
+        avg /= 4.0;
+
+        double offset = (-height) + rng.nextDouble() * (height - (-height));
+        tempList[i][j] = avg + offset;
+
+      }
+    }
+
+    heightMap = tempList;
+    tempList = null;
+    CreateObject(landCon);
 
   }
 
   draw(Matrix4 viewMat, Matrix4 projectMat) {
 
     //print("render");
-    
+
     gl.useProgram(shader);
 
     utils.setMatrixUniforms(gl, viewMat, projectMat, uniforms['uPMatrix'], uniforms['uMVMatrix'], uniforms['uNormalMatrix']);

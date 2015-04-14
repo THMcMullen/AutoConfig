@@ -31,7 +31,7 @@ void main() {
   logic();
   render(1);
   
-  
+  window.onKeyDown.listen(nexus.keyDown);
 
 
 }

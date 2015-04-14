@@ -12,20 +12,27 @@ import 'package:vector_math/vector_math.dart';
 import 'camera.dart' as cam;
 
 class dart_matter {
-
-
   int area = 10;
-  int quality = 3;
-
-
+  int quality = 11;
+  int gridSize;
+  double ratio;
   int baseSystemSize = 129;
+  List locXY = [2.5, 2.5];
+  List oldLocXY = [2.5, 2.5];
+  int queueState = 0;
 
+  int containerSize;
+  
   land_tile baseTile = new land_tile();
 
   List container;
 
   webgl.RenderingContext gl;
   CanvasElement canvas;
+
+  double coreTile;
+  double secondTile;
+  double lastTile;
 
   Matrix4 projectionMat;
   var camera;
@@ -36,8 +43,10 @@ class dart_matter {
 
     camera = new cam.camera(canvas);
 
-    projectionMat = makePerspectiveMatrix(45, (canvas.width / canvas.height), 1, 1000);
-    setPerspectiveMatrix(projectionMat, 45, (canvas.width / canvas.height), 1.0, 1000.0);
+    projectionMat =
+        makePerspectiveMatrix(45, (canvas.width / canvas.height), 1, 1000);
+    setPerspectiveMatrix(
+        projectionMat, 45, (canvas.width / canvas.height), 1.0, 1000.0);
 
     gl.clearColor(0.5, 0.5, 0.5, 1.0);
     gl.clearDepth(1.0);
@@ -47,7 +56,8 @@ class dart_matter {
   draw() {
     Matrix4 viewMat = camera.getViewMat();
 
-    gl.clear(webgl.RenderingContext.COLOR_BUFFER_BIT | webgl.RenderingContext.DEPTH_BUFFER_BIT);
+    gl.clear(webgl.RenderingContext.COLOR_BUFFER_BIT |
+        webgl.RenderingContext.DEPTH_BUFFER_BIT);
 
     for (int i = 0; i < container.length; i++) {
       for (int j = 0; j < container[i].length; j++) {
@@ -62,11 +72,77 @@ class dart_matter {
   update() {
     //aunto config runtime aspect runs here
     camera.update();
+    switch (queueState) {
+      case 1: //center has changed, and outside tiles need to be updated
+        queueState = 2;
+        //remove tiles that are now out of range
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            //find how far away a tile is
+            double difI = i - locXY[0];
+            double difJ = j - locXY[1];
+
+            difI = difI.abs();
+            difJ = difJ.abs();
+
+            if (difI > container.length / 2 || difJ > container.length / 2) {
+              container[i][j] = null;
+            }
+          }
+        }
+        print("new: $locXY");
+        print("old: $oldLocXY");
+        break;
+      case 2: //old tiles have been removed, now add new tiles
+        queueState = 3;
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            //find how far away a tile is
+            double difI = i - locXY[0];
+            double difJ = j - locXY[1];
+
+            difI = difI.abs();
+            difJ = difJ.abs();
+
+            if ((difI + difJ <= (containerSize) / 2) && container[i][j] == null && containerSize != 4) {
+              container[i][j] = new land_tile();
+              container[i][j].generate(i, j, 65, gl);
+              container[i][j].CreateHeightMap(container);
+              container[i][j].CreateObject(container);
+            }
+          }
+        }
+        print("new: $locXY");
+        print("old: $oldLocXY");
+        break;
+      case 3:
+        queueState = 0;
+        print("reset");
+    }
+
+    if ((locXY[0] != oldLocXY[0] || locXY[1] != oldLocXY[1])  && queueState == 0) {
+      queueState = 1;
+      oldLocXY[0] = locXY[0];
+      oldLocXY[1] = locXY[1];
+    }
+
+/*
+ * first remove all tiles out of range
+ * then add new tiles
+ * then downgrade ratio 2 tiles
+ * then upgrade new ratio 2 tiles
+ * then downgrade old ratio 1 tiles
+ * then upgrade new ratio 1 tiles
+ *
+ * 
+ */
+
   }
 
   initState() {
-    double ratio = (area + quality) / quality;
-    if (ratio > 0.5) {
+    ratio = quality / (area + quality);
+    print("Ratio is : $ratio");
+    if (ratio >= 0.5) {
       baseSystemSize = 129;
     } else if (ratio > 0.25) {
       baseSystemSize = 65;
@@ -75,7 +151,7 @@ class dart_matter {
     }
 
     //auto config creation aspect runs here
-    baseTile.generate(0, 0, baseSystemSize, gl);//start location of base tile
+    baseTile.generate(0, 0, baseSystemSize, gl); //start location of base tile
 
     container = new List();
     container.add(new List<land_tile>());
@@ -86,20 +162,38 @@ class dart_matter {
 
     print(baseTile.genTime);
     print(baseTile.runTime);
-    
+
     int genTime = baseTile.genTime + baseTile.runTime;
+
+    gridSize = (1000 / genTime).round();
+
+    print("grid size is: $gridSize");
+
+    baseTile = null;
   }
 
   setup() {
     print("setup");
     initState();
 
-
     container = new List();
 
-    
     //based on the base system size, create defult grid
-    int containerSize;
+
+    //gridSize = 40;
+    if (gridSize < 12) {
+      containerSize = 4;
+    } else if (gridSize < 24) {
+      containerSize = 6;
+    } else if (gridSize < 40) {
+      containerSize = 8;
+    } else if (gridSize < 80) {
+      containerSize = 10;
+    } else {
+      containerSize = 12;
+    }
+
+    /*
     if (baseSystemSize == 129) {
       containerSize = 7;
     } else if (baseSystemSize == 65) {
@@ -107,7 +201,9 @@ class dart_matter {
     } else {
       containerSize = 3;
     }
+    */
 
+    double layout = gridSize * ratio;
 
     for (int i = 0; i < containerSize; i++) {
       container.add(new List<land_tile>());
@@ -119,29 +215,55 @@ class dart_matter {
     //baseTile.generate((containerSize - 1) ~/ 2, (containerSize - 1) ~/ 2, 1/*baseSystemSize*/, gl);
     container[(containerSize - 1) ~/ 2][(containerSize - 1) ~/ 2] = baseTile;
     //print(container[1][1]);
-    print((containerSize - 1) / 2);
+    coreTile = layout / ((containerSize));
+    secondTile = layout / ((containerSize) / 2);
+    lastTile = (containerSize) / 2;
+
+    print("  coreTile: $coreTile");
+    print("secondTile: $secondTile");
+    print("  lastTile: $lastTile");
+
+    double center = (containerSize - 1) / 2;
+    print("Center: $center");
     for (int i = 0; i < container.length; i++) {
       for (int j = 0; j < container[i].length; j++) {
-
-        double difI = i - (containerSize) / 2;
-        double difJ = j - (containerSize) / 2;
+        double difI = i - center;
+        double difJ = j - center;
 
         difI = difI.abs();
         difJ = difJ.abs();
 
-        if (difI + difJ == 1) {
+        //print("Dif I : $difI");
+        //print("Dif J : $difJ");
+
+        if (difI + difJ <= coreTile) {
           container[i][j] = new land_tile();
           container[i][j].generate(i, j, baseSystemSize, gl);
-        } else if ((difI + difJ == 2) || (difI == 1.5) && (difJ == 1.5)) {
+        } else if (difI + difJ <= secondTile ||
+            (((difI <= coreTile + 0.5) && (difJ <= coreTile + 0.5)) &&
+                containerSize != 4)) {
           container[i][j] = new land_tile();
-          container[i][j].generate(i, j, baseSystemSize, gl);
-        } else if ((difI + difJ == 3)) {
+          int tBaseSystemSize = ((baseSystemSize + 1) ~/ 2) < 33
+              ? 33
+              : ((baseSystemSize + 1) ~/ 2);
+          container[i][j].generate(i, j, tBaseSystemSize, gl);
+        } else if ((difI + difJ <= lastTile) && containerSize != 4) {
           container[i][j] = new land_tile();
-          container[i][j].generate(i, j, baseSystemSize, gl);
+          int tBaseSystemSize = (((baseSystemSize) ~/ 4) + 1) < 33
+              ? 33
+              : (((baseSystemSize) ~/ 4) + 1);
+          container[i][j].generate(i, j, tBaseSystemSize, gl);
         }
+
+        /*else if ((difI + difJ <= 2) || (difI == 1.5) && (difJ == 1.5) || difI + difJ <= (containerSize) / 4) {
+          container[i][j] = new land_tile();
+          container[i][j].generate(i, j, 2/*((baseSystemSize + 1) ~/ 2)*/, gl);
+        } else if ((difI + difJ <= (containerSize) / 2)) {
+          container[i][j] = new land_tile();
+          container[i][j].generate(i, j, 3/*(((baseSystemSize) ~/ 4) + 1)*/, gl);
+        }*/
       }
     }
-
 
     List temptwo;
     temptwo = new List();
@@ -161,16 +283,16 @@ class dart_matter {
     }
 
     for (int i = 0; i < containerSize; i++) {
-      print(temptwo[i]);
+      //print(temptwo[i]);
     }
 
     // *
     //* code to add a new tile to the grid and container
-    List tempnew = new List<land_tile>();
+    /*List tempnew = new List<land_tile>();
     tempnew.add(new land_tile());
     tempnew[0].generate(1, 1, 9, gl);
     print(tempnew[0].res);
-
+    */
 
 /*    container[1].add(null);
     container[1][container[1].length-1] = new land_tile();
@@ -239,11 +361,55 @@ class dart_matter {
         }
       }
     }
-
-
-
   }
 
+  keyDown(KeyboardEvent e) {
+    //hit "space" to update the water sim one time step
+    if (e.keyCode == 32) {
+      locXY[0] += 1.0;
+      //locXY[1] += 1.0;
+    }
+    //hit "shift" to make the simulation run automatically, or off
+    //print(e.keyCode);
+    if (e.keyCode == 16) {
+      locXY[0] -= 1.0;
+      //locXY[1] -= 1.0;
+    }
+    if (e.keyCode == 17) {
+      //control
+      print("new: $locXY");
+      print("old: $oldLocXY");
+    }
+    if (e.keyCode == 220) {
+      // "\"
+      List temptwo;
+      temptwo = new List();
+      for (int i = 0; i < 6; i++) {
+        temptwo.add(new List());
+        for (int j = 0; j < 6; j++) {
+          temptwo[i].add(0);
+        }
+      }
 
+      for (int i = 0; i < container.length; i++) {
+        for (int j = 0; j < container[i].length; j++) {
+          if (container[i][j] != null) {
+            if (container[i][j].res == 129) {
+              temptwo[i][j] = 1;
+            }
+            if (container[i][j].res == 65) {
+              temptwo[i][j] = 2;
+            }
+            if (container[i][j].res == 33) {
+              temptwo[i][j] = 3;
+            }
+          }
+        }
+      }
 
+      for (int i = 0; i < 6; i++) {
+        print(temptwo[i]);
+      }
+    }
+  }
 }
