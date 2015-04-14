@@ -67,20 +67,20 @@ class camera{
   
     //W == 87  
     if(e.keyCode == 87){
-      pos[1] -= 1.0;
+      pos[1] -= 10.0;
       
     }
     //S == 83
     if(e.keyCode == 83){
-      pos[1] += 1.0;
+      pos[1] += 10.0;
     }
     //A == 65
     if(e.keyCode == 65){
-      pos[0] -= 1.0;
+      pos[0] -= 10.0;
     }
     //D == 68
     if(e.keyCode == 68){
-      pos[0] += 1.0;
+      pos[0] += 10.0;
     }
     
     //print(viewMat);

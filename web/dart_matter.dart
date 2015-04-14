@@ -44,9 +44,9 @@ class dart_matter {
     camera = new cam.camera(canvas);
 
     projectionMat =
-        makePerspectiveMatrix(45, (canvas.width / canvas.height), 1, 1000);
+        makePerspectiveMatrix(45, (canvas.width / canvas.height), 1, 10000);
     setPerspectiveMatrix(
-        projectionMat, 45, (canvas.width / canvas.height), 1.0, 1000.0);
+        projectionMat, 45, (canvas.width / canvas.height), 1.0, 10000.0);
 
     gl.clearColor(0.5, 0.5, 0.5, 1.0);
     gl.clearDepth(1.0);
@@ -85,11 +85,12 @@ class dart_matter {
             difI = difI.abs();
             difJ = difJ.abs();
 
-            if (difI > container.length / 2 || difJ > container.length / 2) {
+            if (difI + difJ > lastTile) {
               container[i][j] = null;
             }
           }
         }
+        print("Delete");
         print("new: $locXY");
         print("old: $oldLocXY");
         break;
@@ -104,18 +105,51 @@ class dart_matter {
             difI = difI.abs();
             difJ = difJ.abs();
 
-            if ((difI + difJ <= (containerSize) / 2) && container[i][j] == null && containerSize != 4) {
+            if ((difI + difJ <= lastTile) && container[i][j] == null) {
               container[i][j] = new land_tile();
-              container[i][j].generate(i, j, 65, gl);
+              container[i][j].generate(i, j, 33, gl);
               container[i][j].CreateHeightMap(container);
               container[i][j].CreateObject(container);
             }
           }
         }
+        print("Add");
         print("new: $locXY");
         print("old: $oldLocXY");
         break;
-      case 3:
+      case 3://old tiles have been removed, new tiles have been added, new to downgrade older tiles
+        queueState = 4;
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            //find how far away a tile is
+            double difI = i - locXY[0];
+            double difJ = j - locXY[1];
+
+            difI = difI.abs();
+            difJ = difJ.abs();
+            //select only tiles within the secont tile range
+            if ((difI + difJ <= secondTile) && (difI + difJ > coreTile)) {
+              
+              int tBaseSystemSize = (((baseSystemSize) ~/ 4) + 1) < 33
+                                  ? 33
+                                  : (((baseSystemSize) ~/ 4) + 1);
+                            
+
+              //downgrade tiles which are to high a resolution
+              if(container[i][j].res == baseSystemSize){
+                container[i][j].downGrade(container);
+              }else if(container[i][j].res == 33){
+                //upgrade the tiles which have moved into the second range
+                container[i][j].upGrade(container);
+              }
+            }
+          }
+        }
+        print("downgrade");
+        print("new: $locXY");
+        print("old: $oldLocXY");
+        break;
+      case 4:
         queueState = 0;
         print("reset");
     }
@@ -192,7 +226,7 @@ class dart_matter {
     } else {
       containerSize = 12;
     }
-
+    
     /*
     if (baseSystemSize == 129) {
       containerSize = 7;
@@ -203,22 +237,26 @@ class dart_matter {
     }
     */
 
-    double layout = gridSize * ratio;
+    double layout = containerSize * ratio;
 
-    for (int i = 0; i < containerSize; i++) {
+    for (int i = 0; i < 100; i++) {
       container.add(new List<land_tile>());
-      for (int j = 0; j < containerSize; j++) {
+      for (int j = 0; j < 100; j++) {
         container[i].add(null);
       }
     }
     //baseTile = new land_tile();
     //baseTile.generate((containerSize - 1) ~/ 2, (containerSize - 1) ~/ 2, 1/*baseSystemSize*/, gl);
-    container[(containerSize - 1) ~/ 2][(containerSize - 1) ~/ 2] = baseTile;
+    //container[(containerSize - 1) ~/ 2][(containerSize - 1) ~/ 2] = baseTile;
     //print(container[1][1]);
     coreTile = layout / ((containerSize));
-    secondTile = layout / ((containerSize) / 2);
-    lastTile = (containerSize) / 2;
-
+    secondTile = layout / ((containerSize) / 4);
+    lastTile = layout / ((containerSize) / 6);
+    
+    //coreTile = 50.5;
+    //secondTile = 51.5;
+    //lastTile = 52.5;
+    
     print("  coreTile: $coreTile");
     print("secondTile: $secondTile");
     print("  lastTile: $lastTile");
@@ -267,9 +305,9 @@ class dart_matter {
 
     List temptwo;
     temptwo = new List();
-    for (int i = 0; i < containerSize; i++) {
+    for (int i = 0; i < 100; i++) {
       temptwo.add(new List());
-      for (int j = 0; j < containerSize; j++) {
+      for (int j = 0; j < 100; j++) {
         temptwo[i].add(0);
       }
     }
