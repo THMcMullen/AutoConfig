@@ -22,7 +22,7 @@ class dart_matter {
   int queueState = 0;
 
   int containerSize;
-  
+
   land_tile baseTile = new land_tile();
 
   List container;
@@ -48,7 +48,7 @@ class dart_matter {
     setPerspectiveMatrix(
         projectionMat, 45, (canvas.width / canvas.height), 1.0, 10000.0);
 
-    gl.clearColor(0.5, 0.5, 0.5, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clearDepth(1.0);
     gl.enable(webgl.RenderingContext.DEPTH_TEST);
   }
@@ -117,7 +117,7 @@ class dart_matter {
         print("new: $locXY");
         print("old: $oldLocXY");
         break;
-      case 3://old tiles have been removed, new tiles have been added, new to downgrade older tiles
+      case 3: //old tiles have been removed, new tiles have been added, new to downgrade older tiles
         queueState = 4;
         for (int i = 0; i < container.length; i++) {
           for (int j = 0; j < container[i].length; j++) {
@@ -129,17 +129,41 @@ class dart_matter {
             difJ = difJ.abs();
             //select only tiles within the secont tile range
             if ((difI + difJ <= secondTile) && (difI + difJ > coreTile)) {
-              
-              int tBaseSystemSize = (((baseSystemSize) ~/ 4) + 1) < 33
-                                  ? 33
-                                  : (((baseSystemSize) ~/ 4) + 1);
-                            
 
               //downgrade tiles which are to high a resolution
-              if(container[i][j].res == baseSystemSize){
+              if (container[i][j].res > 65) {
                 container[i][j].downGrade(container);
-              }else if(container[i][j].res == 33){
+              } else if (container[i][j].res < 65) {
                 //upgrade the tiles which have moved into the second range
+                container[i][j].upGrade(container);
+              }
+            } else if ((difI + difJ <= lastTile) &&
+                (difI + difJ >= secondTile)) {
+              if (container[i][j].res >= 65) {
+                container[i][j].downGrade(container);
+                
+              }
+            }
+
+          }
+        }
+        print("downgrade");
+        print("new: $locXY");
+        print("old: $oldLocXY");
+        break;
+      case 4:
+        queueState = 5;
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            //find how far away a tile is
+            double difI = i - locXY[0];
+            double difJ = j - locXY[1];
+
+            difI = difI.abs();
+            difJ = difJ.abs();
+            //select only tiles within the core tile range
+            if (difI + difJ <= coreTile) {
+              if (container[i][j].res <= 65) {
                 container[i][j].upGrade(container);
               }
             }
@@ -149,12 +173,41 @@ class dart_matter {
         print("new: $locXY");
         print("old: $oldLocXY");
         break;
-      case 4:
+      case 5:
         queueState = 0;
+        for (int i = 0; i < container.length; i++) {
+             for (int j = 0; j < container[i].length; j++) {
+               if (container[i][j] != null) {
+                 if (container[i][j].res == ((baseSystemSize) ~/ 4) + 1) {
+                   container[i][j].CreateObject(container);
+                 }
+               }
+             }
+           }
+
+           for (int i = 0; i < container.length; i++) {
+             for (int j = 0; j < container[i].length; j++) {
+               if (container[i][j] != null) {
+                 if (container[i][j].res == (baseSystemSize + 1) ~/ 2) {
+                   container[i][j].CreateObject(container);
+                 }
+               }
+             }
+           }
+           for (int i = 0; i < container.length; i++) {
+             for (int j = 0; j < container[i].length; j++) {
+               if (container[i][j] != null) {
+                 if (container[i][j].res == baseSystemSize) {
+                   container[i][j].CreateObject(container);
+                 }
+               }
+             }
+           }
         print("reset");
     }
 
-    if ((locXY[0] != oldLocXY[0] || locXY[1] != oldLocXY[1])  && queueState == 0) {
+    if ((locXY[0] != oldLocXY[0] || locXY[1] != oldLocXY[1]) &&
+        queueState == 0) {
       queueState = 1;
       oldLocXY[0] = locXY[0];
       oldLocXY[1] = locXY[1];
@@ -201,6 +254,7 @@ class dart_matter {
 
     gridSize = (1000 / genTime).round();
 
+    print("base system size: $baseSystemSize");
     print("grid size is: $gridSize");
 
     baseTile = null;
@@ -226,7 +280,7 @@ class dart_matter {
     } else {
       containerSize = 12;
     }
-    
+
     /*
     if (baseSystemSize == 129) {
       containerSize = 7;
@@ -249,14 +303,14 @@ class dart_matter {
     //baseTile.generate((containerSize - 1) ~/ 2, (containerSize - 1) ~/ 2, 1/*baseSystemSize*/, gl);
     //container[(containerSize - 1) ~/ 2][(containerSize - 1) ~/ 2] = baseTile;
     //print(container[1][1]);
-    coreTile = layout / ((containerSize));
+    coreTile = layout / ((containerSize) / 2);
     secondTile = layout / ((containerSize) / 4);
     lastTile = layout / ((containerSize) / 6);
-    
+
     //coreTile = 50.5;
     //secondTile = 51.5;
     //lastTile = 52.5;
-    
+
     print("  coreTile: $coreTile");
     print("secondTile: $secondTile");
     print("  lastTile: $lastTile");
@@ -422,9 +476,9 @@ class dart_matter {
       // "\"
       List temptwo;
       temptwo = new List();
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < container.length; i++) {
         temptwo.add(new List());
-        for (int j = 0; j < 6; j++) {
+        for (int j = 0; j < container[i].length; j++) {
           temptwo[i].add(0);
         }
       }
@@ -445,7 +499,7 @@ class dart_matter {
         }
       }
 
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < 10; i++) {
         print(temptwo[i]);
       }
     }
