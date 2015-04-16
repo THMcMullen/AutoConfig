@@ -36,6 +36,9 @@ class dart_matter {
 
   Matrix4 projectionMat;
   var camera;
+  
+  Vector3 oldPlayerPos = new Vector3.zero(); 
+  Vector3 playerPos = new Vector3.zero();
 
   dart_matter(webgl.RenderingContext givenGL, CanvasElement givenCanvas) {
     gl = givenGL;
@@ -72,6 +75,44 @@ class dart_matter {
   update() {
     //aunto config runtime aspect runs here
     camera.update();
+
+    //if movement over the center tile has changed, then update the center
+    //store player position
+    playerPos = camera.getCurrentXY();
+    double posx = playerPos[0] - oldPlayerPos[0];
+    double posy = playerPos[2] - oldPlayerPos[2];
+    if(posx.abs() + posy.abs() > 129){//we have moved from the center
+      
+      if(posx.abs() > 129){
+        print("x");
+        if((playerPos[0] - oldPlayerPos[0]) > 129){
+          locXY[0]--;
+          print("-");
+          oldPlayerPos[0] = playerPos[0];
+        }else if((playerPos[0] - oldPlayerPos[0]) < -129){
+          locXY[0]++;
+          print("+");
+          oldPlayerPos[0] = playerPos[0];
+        }
+      }
+      
+      if(posy.abs() > 129){
+        print("y");
+        if((playerPos[2] - oldPlayerPos[2]) > 129){
+          locXY[1]--;
+          print("-");
+          oldPlayerPos[2] = playerPos[2];
+        }else if((playerPos[2] - oldPlayerPos[2]) < -129){
+          locXY[1]++;
+          print("+");
+          oldPlayerPos[2] = playerPos[2];
+        }
+      }
+      
+    }
+    
+    
+    
     switch (queueState) {
       case 1: //center has changed, and outside tiles need to be updated
         queueState = 2;
@@ -117,7 +158,7 @@ class dart_matter {
         print("new: $locXY");
         print("old: $oldLocXY");
         break;
-      case 3: //old tiles have been removed, new tiles have been added, new to downgrade older tiles
+      case 3: //old tiles have been removed, new tiles have been added, now to downgrade older tiles
         queueState = 4;
         for (int i = 0; i < container.length; i++) {
           for (int j = 0; j < container[i].length; j++) {
@@ -131,20 +172,18 @@ class dart_matter {
             if ((difI + difJ <= secondTile) && (difI + difJ > coreTile)) {
 
               //downgrade tiles which are to high a resolution
-              if (container[i][j].res > 65) {
+              if (container[i][j].res == 129) {
                 container[i][j].downGrade(container);
-              } else if (container[i][j].res < 65) {
+              } else if (container[i][j].res == 33) {
                 //upgrade the tiles which have moved into the second range
                 container[i][j].upGrade(container);
               }
             } else if ((difI + difJ <= lastTile) &&
                 (difI + difJ >= secondTile)) {
-              if (container[i][j].res >= 65) {
+              if (container[i][j].res == 65) {
                 container[i][j].downGrade(container);
-                
               }
             }
-
           }
         }
         print("downgrade");
@@ -163,7 +202,7 @@ class dart_matter {
             difJ = difJ.abs();
             //select only tiles within the core tile range
             if (difI + difJ <= coreTile) {
-              if (container[i][j].res <= 65) {
+              if (container[i][j].res == 65) {
                 container[i][j].upGrade(container);
               }
             }
@@ -176,33 +215,33 @@ class dart_matter {
       case 5:
         queueState = 0;
         for (int i = 0; i < container.length; i++) {
-             for (int j = 0; j < container[i].length; j++) {
-               if (container[i][j] != null) {
-                 if (container[i][j].res == ((baseSystemSize) ~/ 4) + 1) {
-                   container[i][j].CreateObject(container);
-                 }
-               }
-             }
-           }
+          for (int j = 0; j < container[i].length; j++) {
+            if (container[i][j] != null) {
+              if (container[i][j].res == (33)) {
+                container[i][j].CreateObject(container);
+              }
+            }
+          }
+        }
 
-           for (int i = 0; i < container.length; i++) {
-             for (int j = 0; j < container[i].length; j++) {
-               if (container[i][j] != null) {
-                 if (container[i][j].res == (baseSystemSize + 1) ~/ 2) {
-                   container[i][j].CreateObject(container);
-                 }
-               }
-             }
-           }
-           for (int i = 0; i < container.length; i++) {
-             for (int j = 0; j < container[i].length; j++) {
-               if (container[i][j] != null) {
-                 if (container[i][j].res == baseSystemSize) {
-                   container[i][j].CreateObject(container);
-                 }
-               }
-             }
-           }
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            if (container[i][j] != null) {
+              if (container[i][j].res == (65)) {
+                container[i][j].CreateObject(container);
+              }
+            }
+          }
+        }
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            if (container[i][j] != null) {
+              if (container[i][j].res == 129) {
+                container[i][j].CreateObject(container);
+              }
+            }
+          }
+        }
         print("reset");
     }
 
@@ -459,14 +498,16 @@ class dart_matter {
     //hit "space" to update the water sim one time step
     if (e.keyCode == 32) {
       locXY[0] += 1.0;
-      //locXY[1] += 1.0;
+      //locXY[0] += 1.0;
     }
     //hit "shift" to make the simulation run automatically, or off
     //print(e.keyCode);
     if (e.keyCode == 16) {
       locXY[0] -= 1.0;
-      //locXY[1] -= 1.0;
+      //locXY[0] -= 1.0;
     }
+    //print(e.keyCode);
+
     if (e.keyCode == 17) {
       //control
       print("new: $locXY");

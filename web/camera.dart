@@ -21,7 +21,7 @@ class camera{
   var orbitY = 0.0;
   var distance = 20.0;
   
-  Vector3 pos = new Vector3(0.0,0.0,0.0);
+  Vector3 pos = new Vector3(380.0,-8.0,380.0);
   Vector3 direction = new Vector3(0.0,0.0,0.0);
   
   Vector3 vector = new Vector3(0.0,0.0,0.0);
@@ -67,20 +67,20 @@ class camera{
   
     //W == 87  
     if(e.keyCode == 87){
-      pos[1] -= 10.0;
+      pos[1] -= 1.5;
       
     }
     //S == 83
     if(e.keyCode == 83){
-      pos[1] += 10.0;
+      pos[1] += 1.5;
     }
     //A == 65
     if(e.keyCode == 65){
-      pos[0] -= 10.0;
+      pos[0] -= 1.5;
     }
     //D == 68
     if(e.keyCode == 68){
-      pos[0] += 10.0;
+      pos[0] += 1.0;
     }
     
     //print(viewMat);

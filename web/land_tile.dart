@@ -543,6 +543,39 @@ class land_tile {
     //print("Down Grade");
 
     res = (res ~/ 2) + 1;
+    
+    if (locX + 1 < landCon.length) {
+       if (landCon[locX + 1][locY] != null) {
+         if (landCon[locX + 1][locY].init == true) {
+           above = landCon[locX + 1][locY];
+         }
+       }
+     }
+     //check below
+     if (locX - 1 >= 0) {
+       if (landCon[locX - 1][locY] != null) {
+         if (landCon[locX - 1][locY].init == true) {
+           below = landCon[locX - 1][locY];
+         }
+       }
+     }
+     //check left
+     if (locY - 1 >= 0) {
+       if (landCon[locX][locY - 1] != null) {
+         if (landCon[locX][locY - 1].init == true) {
+           left = landCon[locX][locY - 1];
+         }
+       }
+     }
+     //check right
+     if (locY + 1 < landCon[locX].length) {
+       if (landCon[locX][locY + 1] != null) {
+         if (landCon[locX][locY + 1].init == true) {
+           right = landCon[locX][locY + 1];
+           //print("left");
+         }
+       }
+     }
 
     var tempList = new List(res);
     for (int i = 0; i < res; i++) {
@@ -551,16 +584,41 @@ class land_tile {
         tempList[i][j] = 0.0;
       }
     }
+    
+
+    
 
     for (int i = 0; i < heightMap.length; i += 2) {
       for (int j = 0; j < heightMap[i].length; j += 2) {
         tempList[i ~/ 2][j ~/ 2] = heightMap[i][j];
+        
+
+         
+         
       }
     }
 
+    /*
+    for (int i = 0; i < res; i++) {   
+      for (int j = 0; j < res; j++) {
+        if (above != null && i == res - 1) {
+          tempList[res - 1][j] = above.heightMap[0][j ~/ (res / above.res)];
+        }
+        if (below != null && i == 0) {
+          tempList[0][j] = below.heightMap[below.res - 1][j ~/ (res / below.res)];
+        }
+        if (left != null && j == 0) {
+          tempList[i][0] = left.heightMap[i ~/ (res / left.res)][left.res - 1];
+        }
+        if (right != null && j == res - 1) {
+          tempList[i][res - 1] = right.heightMap[i ~/ (res / right.res)][0];
+        }
+      }
+    }
+    */
     heightMap = tempList;
     tempList = null;
-    CreateObject(landCon);
+    //CreateObject(landCon);
   }
 
   void upGrade(landCon) {
@@ -627,7 +685,7 @@ class land_tile {
         }
       }
     }
-
+    
     for (int i = 1; i < res - 1; i += 2) {
       for (int j = 1; j < res - 1; j += 2) {
 
@@ -654,10 +712,26 @@ class land_tile {
 
       }
     }
-
+    
+    for (int i = 0; i < res; i++) {   
+      for (int j = 0; j < res; j++) {
+        if (above != null && i == res - 1) {
+          tempList[res - 1][j] = above.heightMap[0][j ~/ (res / above.res)];
+        }
+        if (below != null && i == 0) {
+          tempList[0][j] = below.heightMap[below.res - 1][j ~/ (res / below.res)];
+        }
+        if (left != null && j == 0) {
+          tempList[i][0] = left.heightMap[i ~/ (res / left.res)][left.res - 1];
+        }
+        if (right != null && j == res - 1) {
+          tempList[i][res - 1] = right.heightMap[i ~/ (res / right.res)][0];
+        }
+      }
+    }
     heightMap = tempList;
     tempList = null;
-    CreateObject(landCon);
+    //CreateObject(landCon);
 
   }
 
