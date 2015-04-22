@@ -6,6 +6,9 @@ import 'dart:math' as math;
 import 'package:vector_math/vector_math.dart';
 import 'dart:typed_data';
 
+import 'contour_tracing.dart';
+import 'water_two.dart';
+
 
 class land_tile {
 
@@ -45,7 +48,12 @@ class land_tile {
   var right;
 
   var waterBlob;
-
+  
+  //water state says how water is acting on a tile, so if it is there, and if it is running
+  int waterState;
+  
+  contour_tracing blob;
+  water_two water;
 
   land_tile() {
 
@@ -56,6 +64,14 @@ class land_tile {
     locY = y;
     res = resolution;
     gl = givenGL;
+    
+    if(res == 127){
+      waterState = 1;
+    }else if(res == 65){
+      waterState = 2;
+    }else if(res == 33){
+      waterState = 3;
+    }
 
     //shaders to color the landscape based on height
     String vertex = """
@@ -535,6 +551,17 @@ class land_tile {
     init = true;
 
     runTime = new DateTime.now().difference(temp).inMilliseconds.abs();
+    
+
+    //if(locX == 2 && locY == 2){
+      blob = new contour_tracing(0.5, heightMap);
+      
+      for(int i = 0; i < res; i++){
+        //print(blob.blobMap[i]);
+      }
+      water = new water_two(gl, blob.blobMap, res, locX, locY);
+    //}
+    
 
 
   }
@@ -753,7 +780,10 @@ class land_tile {
 
     gl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, indices);
     gl.drawElements(webgl.TRIANGLES, numberOfTri, webgl.UNSIGNED_SHORT, 0);
-
+    
+    //if(locX == 2 && locY == 2){
+      water.drawWater(viewMat, projectMat);
+    //}
   }
 
 }
