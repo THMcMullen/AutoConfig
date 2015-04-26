@@ -49,8 +49,10 @@ class land_tile {
 
   var waterBlob;
   
+  bool waterRender = false;
+  
   //water state says how water is acting on a tile, so if it is there, and if it is running
-  int waterState;
+  int waterState = 0;
   
   contour_tracing blob;
   water_two water;
@@ -65,13 +67,7 @@ class land_tile {
     res = resolution;
     gl = givenGL;
     
-    if(res == 127){
-      waterState = 1;
-    }else if(res == 65){
-      waterState = 2;
-    }else if(res == 33){
-      waterState = 3;
-    }
+
 
     //shaders to color the landscape based on height
     String vertex = """
@@ -552,18 +548,17 @@ class land_tile {
 
     runTime = new DateTime.now().difference(temp).inMilliseconds.abs();
     
-
-    //if(locX == 2 && locY == 2){
-      blob = new contour_tracing(0.5, heightMap);
-      
-      for(int i = 0; i < res; i++){
-        //print(blob.blobMap[i]);
-      }
-      water = new water_two(gl, blob.blobMap, res, locX, locY);
-    //}
+  }
+  
+  addWater(){
     
-
-
+    if(waterState == 3){
+      blob = new contour_tracing(0.5, heightMap);
+    }
+    water = new water_two(gl, blob, res, locX, locY, waterState);
+    
+    waterRender = true;
+        
   }
 
   downGrade(landCon) {
@@ -761,6 +756,14 @@ class land_tile {
     //CreateObject(landCon);
 
   }
+  
+  update(){
+    if(waterState == 3 && water != null){
+      if(water.b != null){      
+        water.waterUpdate();
+      }
+    }
+  }
 
   draw(Matrix4 viewMat, Matrix4 projectMat) {
 
@@ -781,9 +784,10 @@ class land_tile {
     gl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, indices);
     gl.drawElements(webgl.TRIANGLES, numberOfTri, webgl.UNSIGNED_SHORT, 0);
     
-    //if(locX == 2 && locY == 2){
+    if(waterRender){
       water.drawWater(viewMat, projectMat);
-    //}
+    }
+ 
   }
 
 }

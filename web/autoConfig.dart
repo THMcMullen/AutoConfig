@@ -2,6 +2,8 @@ import 'dart:html';
 import 'dart:async';
 import 'dart:web_gl' as webgl;
 
+import 'dart:isolate';
+
 import 'dart_matter.dart';
 
 void main() {
@@ -18,16 +20,21 @@ void main() {
   
   logic(){
      
-    new Future.delayed(const Duration(milliseconds: 1), logic);
+    new Future.delayed(const Duration(milliseconds: 15), logic);
     nexus.update();
       
+  }
+  
+  camera(){
+    //new Future.delayed(const Duration(milliseconds: 15), logic);
+    //nexus.camera.update();
   }
   render(time){
     window.requestAnimationFrame(render);
     nexus.draw(); 
   }
 
-  
+  camera();
   logic();
   render(1);
   

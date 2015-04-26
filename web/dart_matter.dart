@@ -17,8 +17,8 @@ class dart_matter {
   int gridSize;
   double ratio;
   int baseSystemSize = 129;
-  List locXY = [2.5, 2.5];
-  List oldLocXY = [2.5, 2.5];
+  List locXY = [3.5, 3.5];
+  List oldLocXY = [3.5, 3.5];
   int queueState = 0;
 
   int containerSize;
@@ -36,8 +36,8 @@ class dart_matter {
 
   Matrix4 projectionMat;
   var camera;
-  
-  Vector3 oldPlayerPos = new Vector3.zero(); 
+
+  Vector3 oldPlayerPos = new Vector3.zero();
   Vector3 playerPos = new Vector3.zero();
 
   dart_matter(webgl.RenderingContext givenGL, CanvasElement givenCanvas) {
@@ -81,38 +81,36 @@ class dart_matter {
     playerPos = camera.getCurrentXY();
     double posx = playerPos[0] - oldPlayerPos[0];
     double posy = playerPos[2] - oldPlayerPos[2];
-    if(posx.abs() + posy.abs() > 129){//we have moved from the center
-      
-      if(posx.abs() > 129){
+    if (posx.abs() + posy.abs() > 129) {
+      //we have moved from the center
+
+      if (posx.abs() > 129) {
         print("x");
-        if((playerPos[0] - oldPlayerPos[0]) > 129){
+        if ((playerPos[0] - oldPlayerPos[0]) > 129) {
           locXY[0]--;
           print("-");
           oldPlayerPos[0] = playerPos[0];
-        }else if((playerPos[0] - oldPlayerPos[0]) < -129){
+        } else if ((playerPos[0] - oldPlayerPos[0]) < -129) {
           locXY[0]++;
           print("+");
           oldPlayerPos[0] = playerPos[0];
         }
       }
-      
-      if(posy.abs() > 129){
+
+      if (posy.abs() > 129) {
         print("y");
-        if((playerPos[2] - oldPlayerPos[2]) > 129){
+        if ((playerPos[2] - oldPlayerPos[2]) > 129) {
           locXY[1]--;
           print("-");
           oldPlayerPos[2] = playerPos[2];
-        }else if((playerPos[2] - oldPlayerPos[2]) < -129){
+        } else if ((playerPos[2] - oldPlayerPos[2]) < -129) {
           locXY[1]++;
           print("+");
           oldPlayerPos[2] = playerPos[2];
         }
       }
-      
     }
-    
-    
-    
+
     switch (queueState) {
       case 1: //center has changed, and outside tiles need to be updated
         queueState = 2;
@@ -213,7 +211,7 @@ class dart_matter {
         print("old: $oldLocXY");
         break;
       case 5:
-        queueState = 0;
+        queueState = 6;
         for (int i = 0; i < container.length; i++) {
           for (int j = 0; j < container[i].length; j++) {
             if (container[i][j] != null) {
@@ -243,6 +241,34 @@ class dart_matter {
           }
         }
         print("reset");
+        break;
+        
+      case 6:
+        queueState = 7;
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            if (container[i][j] != null) {
+              if(container[i][j].res == 129){
+                container[i][j].waterState = 3;
+              }else{
+                container[i][j].waterState = 0;
+              }
+            }
+          }
+        }
+        break;
+        
+      case 7:
+        queueState = 0;
+        for (int i = 0; i < container.length; i++) {
+          for (int j = 0; j < container[i].length; j++) {
+            if (container[i][j] != null) {
+              container[i][j].addWater();
+            }
+          }
+        }
+        break;
+        
     }
 
     if ((locXY[0] != oldLocXY[0] || locXY[1] != oldLocXY[1]) &&
@@ -250,6 +276,14 @@ class dart_matter {
       queueState = 1;
       oldLocXY[0] = locXY[0];
       oldLocXY[1] = locXY[1];
+    }
+
+    for (int i = 0; i < container.length; i++) {
+      for (int j = 0; j < container[i].length; j++) {
+        if (container[i][j] != null) {
+          container[i][j].update();
+        }
+      }
     }
 
 /*
@@ -492,7 +526,19 @@ class dart_matter {
         }
       }
     }
+    
+    for (int i = 0; i < container.length; i++) {
+      for (int j = 0; j < container[i].length; j++) {
+        if (container[i][j] != null) {
+          if(container[i][j].res == 129){
+            container[i][j].waterState = 3;
+          }
+        }
+      }
+    }
   }
+  
+  
 
   keyDown(KeyboardEvent e) {
     //hit "space" to update the water sim one time step
